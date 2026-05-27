@@ -1,5 +1,7 @@
 # ug-racing
 
+![UG Racing thumbnail](assets/thumbnail.png)
+
 Underground Street Racing System for FiveM standalone servers. This resource adds a hidden race organizer, reputation-gated routes, race lobbies, entry fees, prize pools, checkpoints, race HUD, leaderboards, police tools, and spike strips.
 
 ## Dependencies
