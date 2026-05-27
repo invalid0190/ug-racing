@@ -1,0 +1,273 @@
+/* Tailwind CSS is loaded via @tailwindcss/browser — use utility classes directly */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Speed Lines Animation */
+@keyframes speed-lines {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.15;
+  }
+  90% {
+    opacity: 0.15;
+  }
+  100% {
+    transform: translateX(100vw);
+    opacity: 0;
+  }
+}
+
+@keyframes speed-lines-reverse {
+  0% {
+    transform: translateX(100vw);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.1;
+  }
+  90% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes red-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.5), 0 0 60px rgba(220, 38, 38, 0.2);
+  }
+}
+
+@keyframes rep-bar-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5), inset 0 0 10px rgba(220, 38, 38, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.8), inset 0 0 15px rgba(220, 38, 38, 0.5);
+  }
+}
+
+@keyframes danger-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Speed lines container */
+.speed-lines-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.speed-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.4), transparent);
+  animation: speed-lines 3s linear infinite;
+}
+
+.speed-line.reverse {
+  animation: speed-lines-reverse 4s linear infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(220, 38, 38, 0.6);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(220, 38, 38, 0.9);
+}
+
+/* Global font */
+body {
+  font-family: 'Rajdhani', 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  background: transparent !important;
+  letter-spacing: 0.02em;
+}
+
+/* Main panel styling */
+.racing-panel {
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(0, 0, 0, 0.99) 100%);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  box-shadow: 
+    0 0 60px rgba(220, 38, 38, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: red-glow-pulse 4s ease-in-out infinite;
+}
+
+/* Title styling */
+.underground-title {
+  text-shadow: 
+    0 0 10px rgba(220, 38, 38, 0.8),
+    0 0 20px rgba(220, 38, 38, 0.5),
+    0 0 40px rgba(220, 38, 38, 0.3);
+}
+
+/* Reputation bar */
+.rep-bar-container {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rep-bar-fill {
+  background: linear-gradient(90deg, #7f1d1d, #dc2626, #ef4444);
+  animation: rep-bar-glow 2s ease-in-out infinite;
+}
+
+/* Buttons */
+.btn-create-race {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #991b1b 100%);
+  background-size: 200% 200%;
+  border: 2px solid #dc2626;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-create-race::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    rgba(0, 0, 0, 0.3) 8px,
+    rgba(0, 0, 0, 0.3) 16px
+  );
+  animation: racing-stripes 1s linear infinite;
+}
+
+@keyframes racing-stripes {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(32px); }
+}
+
+.btn-create-race:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 50%, #b91c1c 100%);
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.6);
+}
+
+.btn-join-race {
+  background: rgba(10, 10, 10, 0.9);
+  border: 2px solid rgba(220, 38, 38, 0.6);
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.btn-join-race:hover {
+  background: rgba(30, 10, 10, 0.95);
+  border-color: #dc2626;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(220, 38, 38, 0.1);
+}
+
+.btn-leaderboard {
+  background: rgba(10, 10, 10, 0.9);
+  border: 2px solid rgba(234, 179, 8, 0.4);
+  color: #fbbf24;
+  transition: all 0.3s ease;
+}
+
+.btn-leaderboard:hover {
+  background: rgba(30, 25, 5, 0.95);
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+}
+
+/* HUD specific */
+.race-hud-panel {
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(15, 5, 5, 0.95));
+}
+
+/* Countdown */
+.countdown-number {
+  text-shadow: 0 0 60px currentColor, 0 0 100px currentColor;
+}
+
+/* Results */
+.results-vignette {
+  background: none;
+  pointer-events: none;
+}
+
+.results-panel {
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.98), rgba(0, 0, 0, 0.99));
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.72),
+    0 0 34px rgba(220, 38, 38, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.result-row {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Police warning */
+.police-warning {
+  animation: danger-pulse 0.5s ease-in-out infinite;
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  border: 2px solid #ef4444;
+}
+
+/* Route card */
+.route-card {
+  background: rgba(5, 5, 5, 0.9);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  transition: all 0.3s ease;
+}
+
+.route-card:hover:not(:disabled) {
+  border-color: rgba(220, 38, 38, 0.6);
+  background: rgba(20, 5, 5, 0.95);
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.2);
+}
+
+.route-card:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Player card in lobby */
+.player-card {
+  background: rgba(15, 15, 15, 0.8);
+  border: 1px solid rgba(39, 39, 42, 0.5);
+}
+
+.player-card.ready {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(5, 20, 10, 0.8);
+}

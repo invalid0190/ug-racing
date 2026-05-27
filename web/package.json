@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "build:css": "tailwindcss -i ./styles.css -o ./dist/index.css --minify",
+    "build:js": "esbuild ./index.tsx --bundle --format=esm --outfile=./dist/index.js --jsx=automatic --loader:.tsx=tsx --loader:.ts=ts --minify",
+    "build": "npm run build:css && npm run build:js"
+  },
+  "dependencies": {
+    "framer-motion": "^11.18.2",
+    "lucide-react": "^0.460.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "esbuild": "^0.24.2",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  },
+  "main": "/web/index.tsx"
+}
