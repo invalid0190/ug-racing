@@ -44,6 +44,40 @@ function CloseRaceMenus()
     end
 end
 
+-- Opens the React racing tablet with the freshest client-side snapshot available.
+function OpenRacingTablet()
+    TriggerServerEvent('streetracing:server:getPlayerData')
+    TriggerServerEvent('streetracing:server:getLobbies')
+    TriggerServerEvent('streetracing:server:getLeaderboard')
+    TriggerServerEvent('streetracing:server:getPlayerStats')
+    TriggerServerEvent('streetracing:server:getNetwork')
+    TriggerServerEvent('streetracing:server:getRouteRecords')
+
+    if lib.hideContext then
+        lib.hideContext(false)
+    end
+
+    NUI.Open({
+        rep = PlayerRep,
+        lobby = CurrentLobby,
+        lobbies = AvailableLobbies,
+        routes = NUI.GetRouteSummaries and NUI.GetRouteSummaries() or {},
+        settings = NUI.GetTabletSettings and NUI.GetTabletSettings() or {},
+        serverId = GetPlayerServerId(PlayerId())
+    })
+end
+
+RegisterCommand('racingtablet', function()
+    if NUI and NUI.IsOpen and NUI.IsOpen() then
+        NUI.Close()
+        return
+    end
+
+    OpenRacingTablet()
+end, false)
+
+RegisterKeyMapping('racingtablet', 'Open Racing Tablet', 'keyboard', 'F6')
+
 CreateThread(function()
     while GetResourceState('ox_lib') ~= 'started' do Wait(100) end
     while GetResourceState('ox_target') ~= 'started' do Wait(100) end
@@ -387,6 +421,9 @@ end)
 
 RegisterNetEvent('streetracing:client:leftLobby', function()
     CurrentLobby = nil
+    if Config.RacerRadio and Config.RacerRadio.leaveOnLobbyExit ~= false and RacingRadio and RacingRadio.Leave then
+        RacingRadio.Leave(true)
+    end
     NUI.SendMessage('leftLobby')
     NUI.Close()
 end)
@@ -431,6 +468,18 @@ RegisterNetEvent('streetracing:client:receiveLeaderboard', function(leaderboard)
 
     lib.showContext('streetracing_leaderboard')
     NUI.SendFocusedMessage('receiveLeaderboard', leaderboard)
+end)
+
+RegisterNetEvent('streetracing:client:receivePlayerStats', function(stats)
+    NUI.SendMessage('receivePlayerStats', stats or {})
+end)
+
+RegisterNetEvent('streetracing:client:receiveNetwork', function(network)
+    NUI.SendMessage('receiveNetwork', network or {})
+end)
+
+RegisterNetEvent('streetracing:client:receiveRouteRecords', function(records)
+    NUI.SendMessage('receiveRouteRecords', records or {})
 end)
 
 function GetMyServerId()

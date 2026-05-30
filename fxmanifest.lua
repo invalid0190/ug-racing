@@ -10,6 +10,7 @@ shared_scripts {
 }
 client_scripts {
     'client/nui.lua',
+    'client/radio.lua',
     'client/main.lua',
     'client/race.lua',
     'client/police.lua'

@@ -58,6 +58,10 @@ local function ResetRaceState(hideHud)
     LastPoliceWarning = 0
     ClearCheckpointBlip()
 
+    if Config.RacerRadio and Config.RacerRadio.leaveOnRaceEnd ~= false and RacingRadio and RacingRadio.Leave then
+        RacingRadio.Leave(true)
+    end
+
     if hideHud then
         NUI.SendMessage('hideRaceHUD')
     end
@@ -105,6 +109,10 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
     LastWrongWayWarning = 0
     LastVehicleWarning = 0
     LastPoliceWarning = 0
+
+    if data.radioChannel and Config.RacerRadio and Config.RacerRadio.autoJoinOnRaceStart ~= false and RacingRadio and RacingRadio.Join then
+        RacingRadio.Join(data.radioChannel, true)
+    end
 
     if lib.hideContext then
         lib.hideContext(false)
@@ -171,6 +179,10 @@ RegisterNetEvent('streetracing:client:raceStarting', function(data)
     RaceData = data.lobby or {}
     local countdown = tonumber(data.countdown) or Config.CountdownTime or 5
 
+    if data.radioChannel and Config.RacerRadio and Config.RacerRadio.autoJoinOnRaceStart ~= false and RacingRadio and RacingRadio.Join then
+        RacingRadio.Join(data.radioChannel, true)
+    end
+
     if lib.hideContext then
         lib.hideContext(false)
     end
@@ -221,6 +233,10 @@ RegisterNetEvent('streetracing:client:raceResults', function(data)
     IsRacing = false
     RaceCancelled = false
     ClearCheckpointBlip()
+
+    if Config.RacerRadio and Config.RacerRadio.leaveOnRaceEnd ~= false and RacingRadio and RacingRadio.Leave then
+        RacingRadio.Leave(true)
+    end
 
     NUI.SendFocusedMessage('showResults', {
         results = data.results or {},

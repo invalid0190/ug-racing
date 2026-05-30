@@ -15,16 +15,18 @@ interface RaceHUDProps {
   totalPlayers: number;
   players: PlayerData[];
   policeWarning: boolean;
+  hudOpacity?: number;
 }
 
-export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, position, totalPlayers, players, policeWarning }: RaceHUDProps) {
+export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, position, totalPlayers, players, policeWarning, hudOpacity = 100 }: RaceHUDProps) {
   const safeTotal = Math.max(1, Number(totalCheckpoints) || 1);
   const safeCurrent = Math.min(safeTotal, Math.max(0, Number(currentCheckpoint) || 0));
   const safePlayers = Array.isArray(players) ? players : [];
   const progress = Math.min(100, (safeCurrent / safeTotal) * 100);
+  const safeOpacity = Math.max(0.3, Math.min(1, (Number(hudOpacity) || 100) / 100));
 
   return (
-    <div className="w-screen h-screen relative pointer-events-auto">
+    <div className="w-screen h-screen relative pointer-events-auto" style={{ opacity: safeOpacity }}>
       {/* Speed & position stay centered so they do not cover the GTA minimap. */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
         <motion.div

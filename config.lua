@@ -120,6 +120,19 @@ Config.RaceCooldown = 120 -- seconds between creating races per player
 Config.RaceTimeoutMinutes = 15 -- auto-end active races after this many minutes
 Config.MaxBetMultiplier = 5
 Config.ReputationFile = 'reputation.json'
+Config.StatsFile = 'racing_stats.json'
+Config.RaceHistoryLimit = 25
+
+-- Racer crew radio. Uses pma-voice when available and gives each race lobby a private channel.
+Config.RacerRadio = {
+    enabled = true,
+    voiceResource = 'pma-voice',
+    channelBase = 700,
+    channelRange = 200,
+    autoJoinOnRaceStart = true,
+    leaveOnRaceEnd = true,
+    leaveOnLobbyExit = true
+}
 
 -- Server-side anti-cheat validation
 Config.InteractionDistances = {
