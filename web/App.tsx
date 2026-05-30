@@ -9,9 +9,16 @@ import TabletDashboard from './components/TabletDashboard';
 type Screen = 'none' | 'tablet' | 'racehud' | 'countdown' | 'results';
 
 interface PlayerData {
+  id?: string;
+  serverId?: number;
+  sessionId?: string;
   name: string;
   position?: number;
   finished?: boolean;
+  checkpoint?: number;
+  totalCheckpoints?: number;
+  distance?: number;
+  time?: number;
 }
 
 interface RaceState {
@@ -288,13 +295,19 @@ export default function App() {
   });
 
   useNuiEvent('showRaceHUD', (data: any) => {
-    const players = sanitizeArray<PlayerData>(data?.players);
+    const players = sanitizeArray<PlayerData>(data?.players).map((player, index) => ({
+      ...player,
+      id: player.id || String(player.serverId ?? (player as any).src ?? player.name ?? index),
+      serverId: Number(player.serverId ?? (player as any).src) || undefined,
+      position: Number(player.position) || index + 1
+    }));
     const totalCheckpoints = Math.max(1, Number(data?.totalCheckpoints) || 1);
+    const self = players.find(player => serverId !== null && Number(player.serverId) === Number(serverId));
     setRaceState({
       currentCheckpoint: 0,
       totalCheckpoints,
       speed: 0,
-      position: 1,
+      position: Number(self?.position) || 1,
       totalPlayers: Math.max(1, players.length),
       players,
       policeWarning: false
@@ -325,12 +338,36 @@ export default function App() {
     setRaceState(prev => ({ ...prev, speed: Math.max(0, Number(data?.speed) || 0) }));
   });
 
+  useNuiEvent('racePositions', (data: any) => {
+    const standings = sanitizeArray<PlayerData>(data?.players).map((player, index) => ({
+      ...player,
+      id: player.id || String(player.serverId ?? (player as any).src ?? player.name ?? index),
+      serverId: Number(player.serverId ?? (player as any).src) || undefined,
+      position: Math.max(1, Number(player.position) || index + 1),
+      checkpoint: Math.max(0, Number(player.checkpoint) || 0),
+      totalCheckpoints: Math.max(1, Number(player.totalCheckpoints) || 1),
+      distance: Math.max(0, Number(player.distance) || 0),
+      finished: player.finished === true
+    }));
+
+    setRaceState(prev => {
+      const selfServerId = Number(serverId);
+      const self = standings.find(player => Number(player.serverId) === selfServerId);
+      return {
+        ...prev,
+        position: Math.max(1, Number(data?.position) || Number(self?.position) || prev.position || 1),
+        totalPlayers: Math.max(1, Number(data?.totalPlayers) || standings.length || prev.totalPlayers || 1),
+        players: standings.length > 0 ? standings : prev.players
+      };
+    });
+  });
+
   useNuiEvent('playerFinished', (data: any) => {
-    if (!data?.name) return;
+    if (!data?.name && data?.serverId === undefined) return;
     setRaceState(prev => ({
       ...prev,
       players: prev.players.map(p =>
-        p.name === data.name
+        (data.serverId !== undefined && Number(p.serverId) === Number(data.serverId)) || p.name === data.name
           ? { ...p, position: Number(data.position) || p.position, finished: true }
           : p
       )

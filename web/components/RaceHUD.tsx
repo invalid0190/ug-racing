@@ -2,9 +2,13 @@ import { motion } from 'framer-motion';
 import { Flag, Gauge, Users, AlertTriangle, Siren } from 'lucide-react';
 
 interface PlayerData {
+  id?: string;
+  serverId?: number;
   name: string;
   position?: number;
   finished?: boolean;
+  checkpoint?: number;
+  totalCheckpoints?: number;
 }
 
 interface RaceHUDProps {
@@ -22,6 +26,11 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
   const safeTotal = Math.max(1, Number(totalCheckpoints) || 1);
   const safeCurrent = Math.min(safeTotal, Math.max(0, Number(currentCheckpoint) || 0));
   const safePlayers = Array.isArray(players) ? players : [];
+  const sortedPlayers = [...safePlayers].sort((a, b) => {
+    const posA = Number(a.position) || 999;
+    const posB = Number(b.position) || 999;
+    return posA - posB;
+  });
   const progress = Math.min(100, (safeCurrent / safeTotal) * 100);
   const safeOpacity = Math.max(0.3, Math.min(1, (Number(hudOpacity) || 100) / 100));
 
@@ -94,27 +103,34 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
             <span>Live Standings</span>
           </div>
           <div className="space-y-1.5">
-            {safePlayers.slice(0, 4).map((player, i) => (
+            {sortedPlayers.slice(0, 4).map((player, i) => {
+              const playerPosition = Math.max(1, Number(player.position) || i + 1);
+              return (
               <div
-                key={`${player.name || 'racer'}-${i}`}
+                key={`${player.id || player.serverId || player.name || 'racer'}-${i}`}
                 className={`flex items-center justify-between text-sm ${player.finished ? 'text-green-400' : 'text-zinc-400'}`}
               >
                 <span className="flex items-center gap-2">
                   <span className={`font-bold w-5 ${
-                    i === 0 ? 'text-yellow-500' :
-                    i === 1 ? 'text-zinc-300' :
-                    i === 2 ? 'text-amber-600' :
+                    playerPosition === 1 ? 'text-yellow-500' :
+                    playerPosition === 2 ? 'text-zinc-300' :
+                    playerPosition === 3 ? 'text-amber-600' :
                     'text-zinc-600'
                   }`}>
-                    #{i + 1}
+                    #{playerPosition}
                   </span>
                   <span className="truncate max-w-[90px]">{player.name || 'Unknown'}</span>
                 </span>
-                {player.finished && (
+                {player.finished ? (
                   <span className="text-xs text-green-500 uppercase font-semibold">Done</span>
+                ) : player.checkpoint !== undefined && (
+                  <span className="text-[10px] text-zinc-600 font-mono">
+                    {Math.max(0, Number(player.checkpoint) || 0)}/{Math.max(1, Number(player.totalCheckpoints) || safeTotal)}
+                  </span>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </motion.div>

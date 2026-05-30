@@ -793,6 +793,88 @@ local function BroadcastRaceRadioData(lobby)
     end
 end
 
+local function GetRacePlayerKey(player)
+    if not player then return nil end
+    return player.sessionId or player.identifier
+end
+
+-- Builds live race positions from server-tracked checkpoint progress and finish order.
+local function BuildRaceStandings(lobby)
+    if not lobby or type(lobby.players) ~= 'table' then return {} end
+
+    local checkpoints = lobby.route and lobby.route.checkpoints or {}
+    local totalCheckpoints = type(checkpoints) == 'table' and #checkpoints or 0
+    local finishedPositions = {}
+
+    for index, result in ipairs(lobby.finishOrder or {}) do
+        local key = result.sessionId or result.identifier
+        if key then
+            finishedPositions[key] = {
+                position = index,
+                time = result.time
+            }
+        end
+    end
+
+    local standings = {}
+    for _, player in ipairs(lobby.players or {}) do
+        local key = GetRacePlayerKey(player)
+        local progress = key and lobby.progress and lobby.progress[key] or nil
+        local finished = key and finishedPositions[key] or nil
+        local checkpoint = finished and totalCheckpoints or math.floor(tonumber(progress and progress.checkpoint) or 0)
+        local distance = finished and 0.0 or tonumber(progress and progress.distance) or 999999.0
+
+        standings[#standings + 1] = {
+            id = tostring(player.src),
+            serverId = player.src,
+            sessionId = player.sessionId,
+            name = player.name or GetPlayerName(player.src) or ('Racer %d'):format(player.src),
+            checkpoint = math.max(0, math.min(totalCheckpoints, checkpoint)),
+            totalCheckpoints = totalCheckpoints,
+            distance = math.max(0.0, distance),
+            finished = finished ~= nil,
+            finishPosition = finished and finished.position or nil,
+            time = finished and finished.time or nil
+        }
+    end
+
+    table.sort(standings, function(a, b)
+        if a.finished ~= b.finished then return a.finished end
+        if a.finished and b.finished then
+            return (a.finishPosition or 999) < (b.finishPosition or 999)
+        end
+        if a.checkpoint ~= b.checkpoint then return a.checkpoint > b.checkpoint end
+        if math.abs((a.distance or 0.0) - (b.distance or 0.0)) > 0.01 then
+            return (a.distance or 999999.0) < (b.distance or 999999.0)
+        end
+        return tostring(a.name) < tostring(b.name)
+    end)
+
+    for index, entry in ipairs(standings) do
+        entry.position = index
+    end
+
+    return standings
+end
+
+local function BroadcastRaceStandings(lobby)
+    if not lobby or type(lobby.players) ~= 'table' then return end
+
+    local standings = BuildRaceStandings(lobby)
+    local positionsBySource = {}
+    for _, entry in ipairs(standings) do
+        positionsBySource[entry.serverId] = entry.position
+    end
+
+    for _, player in ipairs(lobby.players) do
+        TriggerClientEvent('streetracing:client:racePositions', player.src, {
+            position = positionsBySource[player.src] or #standings,
+            totalPlayers = #standings,
+            players = standings
+        })
+    end
+end
+
 local callbackApi = lib and type(lib.callback) == 'table' and lib.callback or nil
 if callbackApi and type(callbackApi.register) == 'function' then
     -- Provides a current lobby snapshot for ox_lib menus without relying on event timing.
@@ -1274,11 +1356,21 @@ RegisterNetEvent('streetracing:server:startRace', function()
         current.startedAt = GetGameTimer()
         current.finishOrder = {}
         current.finished = {}
+        current.progress = {}
         current.policeNearby = false
         current.lastPoliceWarning = 0
         ActiveRaces[lobbyId] = current
 
         for _, player in ipairs(current.players) do
+            local playerKey = GetRacePlayerKey(player)
+            if playerKey then
+                current.progress[playerKey] = {
+                    checkpoint = 0,
+                    distance = 999999.0,
+                    updatedAt = GetGameTimer()
+                }
+            end
+
             TriggerClientEvent('streetracing:client:raceStart', player.src, {
                 lobby = current,
                 checkpoints = current.route.checkpoints,
@@ -1287,6 +1379,7 @@ RegisterNetEvent('streetracing:server:startRace', function()
             })
         end
 
+        BroadcastRaceStandings(current)
         StartPoliceWarningMonitor(lobbyId)
 
         SetTimeout(Config.RaceTimeoutMinutes * 60 * 1000, function()
@@ -1295,6 +1388,62 @@ RegisterNetEvent('streetracing:server:startRace', function()
             end
         end)
     end)
+end)
+
+-- Receives lightweight client progress and broadcasts live standings to every racer.
+RegisterNetEvent('streetracing:server:updateRaceProgress', function(checkpoint, distanceToNext)
+    local src = NormalizeSource(source)
+    if not src then return end
+
+    local sessionId = GetLobbyKey(src)
+    if not sessionId then return end
+
+    local lobbyId = PlayerLobby[sessionId]
+    local lobby = lobbyId and ActiveRaces[lobbyId]
+    if not lobby or lobby.settled or lobby.finished[sessionId] then return end
+
+    local checkpoints = lobby.route and lobby.route.checkpoints
+    local totalCheckpoints = type(checkpoints) == 'table' and #checkpoints or 0
+    if totalCheckpoints <= 0 then return end
+
+    checkpoint = math.max(0, math.min(totalCheckpoints, math.floor(tonumber(checkpoint) or 0)))
+    lobby.progress = lobby.progress or {}
+
+    local previous = lobby.progress[sessionId] or {
+        checkpoint = 0,
+        distance = 999999.0,
+        updatedAt = 0
+    }
+    previous.checkpoint = math.max(0, math.min(totalCheckpoints, math.floor(tonumber(previous.checkpoint) or 0)))
+    previous.distance = math.max(0.0, tonumber(previous.distance) or 999999.0)
+
+    if checkpoint < previous.checkpoint then
+        checkpoint = previous.checkpoint
+    elseif checkpoint > previous.checkpoint + 1 then
+        LogError(('Rejected impossible progress jump from source %s race %s (%d -> %d)'):format(src, lobbyId, previous.checkpoint, checkpoint))
+        return
+    end
+
+    local distance = tonumber(distanceToNext) or 999999.0
+    local nextCheckpoint = checkpoint < totalCheckpoints and checkpoints[checkpoint + 1] or nil
+    local playerCoords = GetPlayerCoords(src)
+    if playerCoords and nextCheckpoint then
+        distance = #(playerCoords - nextCheckpoint)
+    elseif checkpoint >= totalCheckpoints then
+        distance = 0.0
+    end
+
+    local now = GetGameTimer()
+    lobby.progress[sessionId] = {
+        checkpoint = checkpoint,
+        distance = math.max(0.0, math.min(distance, 999999.0)),
+        updatedAt = now
+    }
+
+    if checkpoint ~= previous.checkpoint or now - (lobby.lastStandingBroadcast or 0) >= 750 then
+        lobby.lastStandingBroadcast = now
+        BroadcastRaceStandings(lobby)
+    end
 end)
 
 -- Accepts a finish only once per racer and validates time, vehicle, and finish-line distance.
@@ -1336,6 +1485,13 @@ RegisterNetEvent('streetracing:server:playerFinished', function(checkpointTime)
     end
 
     lobby.finished[sessionId] = true
+    lobby.progress = lobby.progress or {}
+    lobby.progress[sessionId] = {
+        checkpoint = type(lobby.route and lobby.route.checkpoints) == 'table' and #lobby.route.checkpoints or 0,
+        distance = 0.0,
+        updatedAt = GetGameTimer()
+    }
+
     table.insert(lobby.finishOrder, {
         src = src,
         sessionId = sessionId,
@@ -1347,11 +1503,14 @@ RegisterNetEvent('streetracing:server:playerFinished', function(checkpointTime)
     local position = #lobby.finishOrder
     for _, player in ipairs(lobby.players) do
         TriggerClientEvent('streetracing:client:playerFinished', player.src, {
+            serverId = src,
+            sessionId = sessionId,
             name = GetPlayerName(src) or ('Racer %d'):format(src),
             position = position
         })
     end
 
+    BroadcastRaceStandings(lobby)
     CheckRaceComplete(lobbyId)
 end)
 

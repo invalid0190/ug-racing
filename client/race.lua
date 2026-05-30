@@ -11,6 +11,7 @@ local ActiveCheckpointBlip = nil
 local LastWrongWayWarning = 0
 local LastVehicleWarning = 0
 local LastPoliceWarning = 0
+local LastProgressSent = 0
 
 local function Notify(data)
     lib.notify(data)
@@ -56,6 +57,7 @@ local function ResetRaceState(hideHud)
     RaceData = {}
     PoliceNearby = false
     LastPoliceWarning = 0
+    LastProgressSent = 0
     ClearCheckpointBlip()
 
     if Config.RacerRadio and Config.RacerRadio.leaveOnRaceEnd ~= false and RacingRadio and RacingRadio.Leave then
@@ -67,9 +69,28 @@ local function ResetRaceState(hideHud)
     end
 end
 
+-- Sends local checkpoint progress so the server can calculate live race standings.
+local function SendRaceProgress(force)
+    if not IsRacing or RaceCancelled or TotalCheckpoints <= 0 then return end
+
+    local now = GetGameTimer()
+    if not force and now - LastProgressSent < 1000 then return end
+
+    LastProgressSent = now
+    local nextCheckpoint = CurrentCheckpoint < TotalCheckpoints and Checkpoints[CurrentCheckpoint + 1] or nil
+    local distance = 0.0
+
+    if nextCheckpoint then
+        distance = #(GetEntityCoords(PlayerPedId()) - nextCheckpoint)
+    end
+
+    TriggerServerEvent('streetracing:server:updateRaceProgress', CurrentCheckpoint, distance)
+end
+
 local function AdvanceCheckpoint()
     CurrentCheckpoint = CurrentCheckpoint + 1
     PlaySoundFrontend(-1, 'CHECKPOINT_NORMAL', 'HUD_MINI_GAME_SOUNDSET', true)
+    SendRaceProgress(true)
 
     if CurrentCheckpoint >= TotalCheckpoints then
         if FinishedSent then return end
@@ -109,6 +130,7 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
     LastWrongWayWarning = 0
     LastVehicleWarning = 0
     LastPoliceWarning = 0
+    LastProgressSent = 0
 
     if data.radioChannel and Config.RacerRadio and Config.RacerRadio.autoJoinOnRaceStart ~= false and RacingRadio and RacingRadio.Join then
         RacingRadio.Join(data.radioChannel, true)
@@ -124,6 +146,7 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
     })
 
     SetCheckpointBlip(Checkpoints[1], TotalCheckpoints == 1)
+    SendRaceProgress(true)
 
     CreateThread(function()
         local timeoutAt = RaceStartTime + (Config.RaceTimeoutMinutes * 60 * 1000)
@@ -154,6 +177,7 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
 
                 local speedMph = math.floor(GetEntitySpeed(playerVehicle) * 2.23694)
                 NUI.SendMessage('updateSpeed', { speed = speedMph })
+                SendRaceProgress(false)
             else
                 local now = GetGameTimer()
                 if now - LastVehicleWarning > 5000 then
@@ -226,6 +250,10 @@ RegisterNetEvent('streetracing:client:playerFinished', function(data)
         title = ('%s finished #%d!'):format(data.name or 'A racer', data.position or 0),
         type = 'inform'
     })
+end)
+
+RegisterNetEvent('streetracing:client:racePositions', function(data)
+    NUI.SendMessage('racePositions', data or {})
 end)
 
 RegisterNetEvent('streetracing:client:raceResults', function(data)
