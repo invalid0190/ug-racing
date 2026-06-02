@@ -282,6 +282,25 @@ RegisterNUICallback('getLeaderboard', function(_, cb)
     cb({ success = true })
 end)
 
+-- Set waypoint to race start line
+RegisterNUICallback('setWaypoint', function(_, cb)
+    if not CurrentLobby or not CurrentLobby.route or not CurrentLobby.route.checkpoints then
+        cb({ success = false, error = 'no_lobby' })
+        return
+    end
+
+    local startPos = CurrentLobby.route.checkpoints[1]
+    if startPos then
+        SetNewWaypoint(startPos.x, startPos.y)
+        lib.notify({
+            title = 'Waypoint Set',
+            description = 'Start line marked on your GPS. Drive there!',
+            type = 'success'
+        })
+    end
+    cb({ success = true })
+end)
+
 RegisterNUICallback('getDashboardData', function(_, cb)
     NUI.SendDashboardData()
     cb({ success = true })

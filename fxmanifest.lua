@@ -1,6 +1,6 @@
 fx_version 'cerulean'
 game 'gta5'
-
+lua54 'yes'
 author 'BLDR'
 description 'Underground Street Racing System'
 

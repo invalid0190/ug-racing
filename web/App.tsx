@@ -405,7 +405,6 @@ export default function App() {
 
   useNuiEvent('receiveLeaderboard', (data: any[]) => {
     setLeaderboardData(sanitizeArray(data));
-    if (screen === 'none') setScreen('tablet');
   });
 
   useNuiEvent('receivePlayerData', (data: any) => {

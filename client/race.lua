@@ -92,6 +92,11 @@ local function AdvanceCheckpoint()
     PlaySoundFrontend(-1, 'CHECKPOINT_NORMAL', 'HUD_MINI_GAME_SOUNDSET', true)
     SendRaceProgress(true)
 
+    NUI.SendMessage('updateCheckpoint', {
+        current = CurrentCheckpoint,
+        total = TotalCheckpoints
+    })
+
     if CurrentCheckpoint >= TotalCheckpoints then
         if FinishedSent then return end
 
@@ -105,10 +110,6 @@ local function AdvanceCheckpoint()
 
     local nextCheckpoint = Checkpoints[CurrentCheckpoint + 1]
     SetCheckpointBlip(nextCheckpoint, CurrentCheckpoint == TotalCheckpoints - 1)
-    NUI.SendMessage('updateCheckpoint', {
-        current = CurrentCheckpoint,
-        total = TotalCheckpoints
-    })
 end
 
 -- Starts the live checkpoint, HUD, timeout, and warning loops for a race.
@@ -197,11 +198,11 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
     PoliceNearby = false
 end)
 
--- Shows countdown UI and positions/freeze the player's vehicle for launch.
+-- Shows countdown UI and freezes the player's vehicle in place for launch.
 RegisterNetEvent('streetracing:client:raceStarting', function(data)
     data = data or {}
     RaceData = data.lobby or {}
-    local countdown = tonumber(data.countdown) or Config.CountdownTime or 5
+    local countdown = tonumber(data.countdown) or Config.CountdownTime or 10
 
     if data.radioChannel and Config.RacerRadio and Config.RacerRadio.autoJoinOnRaceStart ~= false and RacingRadio and RacingRadio.Join then
         RacingRadio.Join(data.radioChannel, true)
@@ -217,20 +218,10 @@ RegisterNetEvent('streetracing:client:raceStarting', function(data)
         routeName = RaceData.route and RaceData.route.name or 'Race'
     })
 
-    local checkpoints = RaceData.route and RaceData.route.checkpoints
-    local startPos = checkpoints and checkpoints[1]
-    local secondPos = checkpoints and checkpoints[2]
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(ped, false)
 
-    if vehicle and vehicle ~= 0 and startPos then
-        SetEntityCoords(vehicle, startPos.x, startPos.y, startPos.z + 1.0, false, false, false, false)
-
-        if secondPos then
-            local heading = GetHeadingFromVector_2d(secondPos.x - startPos.x, secondPos.y - startPos.y)
-            SetEntityHeading(vehicle, heading)
-        end
-
+    if vehicle and vehicle ~= 0 then
         FreezeEntityPosition(vehicle, true)
         CreateThread(function()
             Wait(countdown * 1000)

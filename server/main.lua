@@ -994,8 +994,39 @@ end
 
 local function CheckRaceComplete(lobbyId)
     local lobby = ActiveRaces[lobbyId]
-    if lobby and #(lobby.finishOrder or {}) >= #lobby.players then
+    if not lobby then return end
+
+    local finishedCount = #(lobby.finishOrder or {})
+    local totalPlayers = #lobby.players
+
+    -- All racers crossed the line: settle immediately.
+    if finishedCount >= totalPlayers then
         FinalizeRace(lobbyId, 'complete')
+        return
+    end
+
+    -- First finisher: start a DNF countdown for remaining racers.
+    if finishedCount == 1 and not lobby.dnfTimerStarted then
+        lobby.dnfTimerStarted = true
+        local dnfTimeout = (tonumber(Config.DNFTimeoutSeconds) or 120) * 1000
+
+        -- Notify remaining racers about the DNF countdown.
+        for _, player in ipairs(lobby.players) do
+            local key = GetRacePlayerKey(player)
+            if key and not lobby.finished[key] then
+                Notify(player.src, {
+                    title = 'Race Leader Finished!',
+                    description = ('You have %d seconds to finish or you will be marked DNF'):format(math.floor(dnfTimeout / 1000)),
+                    type = 'warning'
+                })
+            end
+        end
+
+        SetTimeout(dnfTimeout, function()
+            if ActiveRaces[lobbyId] and not ActiveRaces[lobbyId].settled then
+                FinalizeRace(lobbyId, 'dnf_timeout')
+            end
+        end)
     end
 end
 
@@ -1317,14 +1348,20 @@ RegisterNetEvent('streetracing:server:startRace', function()
         return
     end
 
+    local startCoords = lobby.route and lobby.route.checkpoints and lobby.route.checkpoints[1]
+    if not startCoords then
+        Notify(src, { title = 'Error', description = 'Route has no start location', type = 'error' })
+        return
+    end
+
     for _, player in ipairs(lobby.players) do
         if not player.isHost and not player.ready then
             Notify(src, { title = 'Not Ready', description = 'All non-host racers must ready up first', type = 'error' })
             return
         end
 
-        if not ValidateDistance(player.src, OrganizerCoords(), Config.InteractionDistances.organizer, 'startRace') then
-            Notify(src, { title = 'Too Far Away', description = 'Every racer must be near the organizer before starting', type = 'error' })
+        if not ValidateDistance(player.src, startCoords, Config.InteractionDistances.startLine, 'startRace') then
+            Notify(src, { title = 'Too Far Away', description = ('%s must be near the start line'):format(player.name), type = 'error' })
             return
         end
 

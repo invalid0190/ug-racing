@@ -355,6 +355,20 @@ function OpenLobbyMenu()
         end
     })
 
+    table.insert(playerOptions, {
+        title = 'Set Waypoint to Start',
+        description = 'Mark the start line on your GPS',
+        icon = 'location-dot',
+        onSelect = function()
+            local checkpoints = lobby.route and lobby.route.checkpoints
+            local startPos = checkpoints and checkpoints[1]
+            if startPos then
+                SetNewWaypoint(startPos.x, startPos.y)
+                Notify({ title = 'Waypoint Set', description = 'Start line marked on your GPS. Drive there!', type = 'success' })
+            end
+        end
+    })
+
     if isHost then
         table.insert(playerOptions, {
             title = 'Start Race',
@@ -457,17 +471,19 @@ RegisterNetEvent('streetracing:client:receiveLeaderboard', function(leaderboard)
         })
     end
 
-    lib.registerContext({
-        id = 'streetracing_leaderboard',
-        title = 'Top Racers',
-        menu = 'streetracing_main',
-        canClose = true,
-        onExit = CloseRaceMenus,
-        options = lbOptions
-    })
+    if not NUI.IsOpen() then
+        lib.registerContext({
+            id = 'streetracing_leaderboard',
+            title = 'Top Racers',
+            menu = 'streetracing_main',
+            canClose = true,
+            onExit = CloseRaceMenus,
+            options = lbOptions
+        })
 
-    lib.showContext('streetracing_leaderboard')
-    NUI.SendFocusedMessage('receiveLeaderboard', leaderboard)
+        lib.showContext('streetracing_leaderboard')
+    end
+    NUI.SendMessage('receiveLeaderboard', leaderboard)
 end)
 
 RegisterNetEvent('streetracing:client:receivePlayerStats', function(stats)

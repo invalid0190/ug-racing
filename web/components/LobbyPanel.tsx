@@ -8,6 +8,7 @@ import {
   Flag,
   Lock,
   LogOut,
+  MapPin,
   Play,
   Users,
   Zap
@@ -303,7 +304,17 @@ function ActiveLobbyView({ lobby, serverId }: { lobby: LobbyData; serverId: numb
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="mb-3">
+        <button
+          onClick={() => fetchNui('setWaypoint', {}, { success: true })}
+          className="w-full py-3 rounded-lg font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-2 bg-blue-950/40 border border-blue-500/40 text-blue-400 hover:bg-blue-900/40 transition-all"
+        >
+          <MapPin size={16} />
+          Set Waypoint to Start Line
+        </button>
+      </div>
+
+      <div className={`grid gap-3 ${isHost ? 'grid-cols-2' : 'grid-cols-3'}`}>
         <button
           onClick={() => fetchNui('toggleReady', {}, { success: true })}
           className="btn-join-race py-3 rounded-lg font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-2"
@@ -337,7 +348,7 @@ function ActiveLobbyView({ lobby, serverId }: { lobby: LobbyData; serverId: numb
 
       {isHost && !canStart && (
         <p className="text-center text-zinc-600 text-sm">
-          Waiting for all players to be ready.
+          Waiting for all players to be ready. All racers must be near the start line.
         </p>
       )}
     </div>

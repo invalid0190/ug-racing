@@ -3,7 +3,7 @@ Config = Config or {}
 -- Secret NPC location (underground race organizer)
 Config.NPC = {
     model = "g_m_m_chicold_01",
-    coords = vector4(-1202.06, -1593.14, 3.2, 205.7), -- Hidden alley location
+    coords = vector4(-1202.06, -1593.14, 4.21, 205.7), -- Hidden alley location
     scenario = "WORLD_HUMAN_SMOKING"
 }
 
@@ -27,17 +27,15 @@ Config.Routes = {
         type = "urban",
         features = { "starter", "circuit", "technical" },
         checkpoints = {
-            vector3(-302.4, -875.8, 31.1),
-            vector3(-207.7, -1017.6, 30.1),
-            vector3(35.4, -1044.7, 29.5),
-            vector3(220.2, -1005.2, 29.3),
-            vector3(287.3, -812.7, 29.2),
-            vector3(265.4, -606.3, 43.0),
-            vector3(95.6, -563.8, 43.5),
-            vector3(-124.4, -585.5, 36.3),
-            vector3(-274.5, -678.4, 33.4),
-            vector3(-363.2, -806.8, 31.5),
-            vector3(-302.4, -875.8, 31.1)
+            vec3(-190.57, -891.67, 28.67),--1
+            vec3(-44.73, -960.87, 28.75),--2
+            vec3(-87.16, -1126.66, 25.11),--3
+            vec3(42.35, -1125.0, 28.66),--4
+            vec3(109.99, -1013.52, 28.73),--5
+            vec3(225.02, -1022.95, 28.69),--6
+            vec3(254.72, -849.08, 28.89),--7
+            vec3(36.52, -767.85, 30.94),--8
+            vec3(-221.94, -679.01, 32.87),--9
         }
     },
     {
@@ -346,11 +344,12 @@ Config.RepRewards = {
 -- Race settings
 Config.MaxPlayers = 8
 Config.MinPlayers = 2
-Config.CountdownTime = 5
+Config.CountdownTime = 10
 Config.CheckpointRadius = 15.0
 Config.MaxDistanceFromRoute = 220.0
 Config.RaceCooldown = 120 -- seconds between creating races per player
 Config.RaceTimeoutMinutes = 15 -- auto-end active races after this many minutes
+Config.DNFTimeoutSeconds = 120 -- seconds after first finisher before remaining racers are marked DNF
 Config.MaxBetMultiplier = 5
 Config.ReputationFile = 'reputation.json'
 Config.StatsFile = 'racing_stats.json'
