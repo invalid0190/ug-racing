@@ -143,7 +143,8 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
 
     NUI.SendMessage('showRaceHUD', {
         totalCheckpoints = TotalCheckpoints,
-        players = RaceData.players or {}
+        players = RaceData.players or {},
+        serverId = GetPlayerServerId(PlayerId())
     })
 
     SetCheckpointBlip(Checkpoints[1], TotalCheckpoints == 1)
@@ -203,6 +204,7 @@ RegisterNetEvent('streetracing:client:raceStarting', function(data)
     data = data or {}
     RaceData = data.lobby or {}
     local countdown = tonumber(data.countdown) or Config.CountdownTime or 10
+    local routeName = RaceData.route and RaceData.route.name or 'Race'
 
     if data.radioChannel and Config.RacerRadio and Config.RacerRadio.autoJoinOnRaceStart ~= false and RacingRadio and RacingRadio.Join then
         RacingRadio.Join(data.radioChannel, true)
@@ -212,10 +214,11 @@ RegisterNetEvent('streetracing:client:raceStarting', function(data)
         lib.hideContext(false)
     end
 
-    NUI.Close()
+    NUI.ReleaseFocus()
     NUI.SendMessage('showCountdown', {
         countdown = countdown,
-        routeName = RaceData.route and RaceData.route.name or 'Race'
+        routeName = routeName,
+        serverId = GetPlayerServerId(PlayerId())
     })
 
     local ped = PlayerPedId()
@@ -257,6 +260,9 @@ RegisterNetEvent('streetracing:client:raceResults', function(data)
         RacingRadio.Leave(true)
     end
 
+    CurrentLobby = nil
+    NUI.SendMessage('leftLobby')
+
     NUI.SendFocusedMessage('showResults', {
         results = data.results or {},
         prizePool = data.prizePool or 0,
@@ -269,6 +275,8 @@ end)
 
 RegisterNetEvent('streetracing:client:raceCancelled', function(reason)
     ResetRaceState(true)
+    CurrentLobby = nil
+    NUI.SendMessage('leftLobby')
     Notify({
         title = 'Race Cancelled',
         description = reason or 'The race has been cancelled',
@@ -280,6 +288,8 @@ RegisterNetEvent('streetracing:client:policeWarning', function(data)
     data = data or {}
     if data.scatter then
         ResetRaceState(true)
+        CurrentLobby = nil
+        NUI.SendMessage('leftLobby')
         Notify({
             title = 'POLICE RAID!',
             description = 'Scatter! The cops are busting the race!',

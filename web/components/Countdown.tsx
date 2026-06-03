@@ -79,6 +79,7 @@ export default function Countdown({ countdown: initialCount, routeName }: Countd
             </motion.div>
           ) : (
             <motion.div
+              key="go"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="flex items-center justify-center gap-4"

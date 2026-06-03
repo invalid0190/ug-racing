@@ -20,4 +20,4 @@ server_scripts { 'server/*.lua' }
 ui_page 'web/dist/index.html'
 files { 'web/dist/**/*' }
 
-dependencies { 'ox_lib', 'ox_target' }
+dependencies { 'ox_lib' }

@@ -214,6 +214,12 @@ const defaultSettings: TabletSettings = {
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>(isDebug ? 'tablet' : 'none');
+  const [isRaceActive, setIsRaceActive] = useState(false);
+  const isRaceActiveRef = useRef(false);
+  const setIsRaceActiveSync = (active: boolean) => {
+    isRaceActiveRef.current = active;
+    setIsRaceActive(active);
+  };
   const [raceState, setRaceState] = useState<RaceState>({
     currentCheckpoint: 0,
     totalCheckpoints: 10,
@@ -240,7 +246,11 @@ export default function App() {
   const hudOpacity = Math.max(30, Math.min(100, Number(settings.hudOpacity) || 100));
 
   const handleClose = useCallback(() => {
-    setScreen('none');
+    if (isRaceActiveRef.current) {
+      setScreen(prev => (prev === 'countdown' || prev === 'racehud' || prev === 'results') ? prev : 'racehud');
+    } else {
+      setScreen('none');
+    }
     fetchNui('close', {}, { success: true });
   }, []);
 
@@ -288,21 +298,37 @@ export default function App() {
     setScreen('tablet');
   });
 
-  useNuiEvent('close', () => setScreen('none'));
+  useNuiEvent('close', () => {
+    if (isRaceActiveRef.current) {
+      setScreen(prev => (prev === 'countdown' || prev === 'racehud' || prev === 'results') ? prev : 'racehud');
+    } else {
+      setScreen('none');
+    }
+  });
 
   useNuiEvent('setVisible', (data: any) => {
-    if (data?.visible === false) setScreen('none');
+    if (data?.visible === false) {
+      if (isRaceActiveRef.current) {
+        setScreen(prev => (prev === 'countdown' || prev === 'racehud' || prev === 'results') ? prev : 'racehud');
+      } else {
+        setScreen('none');
+      }
+    }
   });
 
   useNuiEvent('showRaceHUD', (data: any) => {
-    const players = sanitizeArray<PlayerData>(data?.players).map((player, index) => ({
-      ...player,
-      id: player.id || String(player.serverId ?? (player as any).src ?? player.name ?? index),
-      serverId: Number(player.serverId ?? (player as any).src) || undefined,
-      position: Number(player.position) || index + 1
-    }));
+    if (data?.serverId !== undefined) setServerId(Number(data.serverId) || null);
+    const currentServerId = data?.serverId !== undefined ? Number(data.serverId) : serverId;
+    const players = sanitizeArray<PlayerData>(data?.players)
+      .filter(player => player && typeof player === 'object')
+      .map((player, index) => ({
+        ...player,
+        id: player.id || String(player.serverId ?? (player as any).src ?? player.name ?? index),
+        serverId: Number(player.serverId ?? (player as any).src) || undefined,
+        position: Number(player.position) || index + 1
+      }));
     const totalCheckpoints = Math.max(1, Number(data?.totalCheckpoints) || 1);
-    const self = players.find(player => serverId !== null && Number(player.serverId) === Number(serverId));
+    const self = players.find(player => currentServerId !== null && Number(player.serverId) === Number(currentServerId));
     setRaceState({
       currentCheckpoint: 0,
       totalCheckpoints,
@@ -312,14 +338,20 @@ export default function App() {
       players,
       policeWarning: false
     });
+    setIsRaceActiveSync(true);
     setScreen('racehud');
   });
 
-  useNuiEvent('hideRaceHUD', () => setScreen('none'));
+  useNuiEvent('hideRaceHUD', () => {
+    setIsRaceActiveSync(false);
+    setScreen('none');
+  });
 
   useNuiEvent('showCountdown', (data: any) => {
     setCountdown(Math.max(1, Number(data?.countdown) || 5));
     setRouteName(data?.routeName || 'Race');
+    if (data?.serverId !== undefined) setServerId(Number(data.serverId) || null);
+    setIsRaceActiveSync(true);
     setScreen('countdown');
   });
 
@@ -339,16 +371,18 @@ export default function App() {
   });
 
   useNuiEvent('racePositions', (data: any) => {
-    const standings = sanitizeArray<PlayerData>(data?.players).map((player, index) => ({
-      ...player,
-      id: player.id || String(player.serverId ?? (player as any).src ?? player.name ?? index),
-      serverId: Number(player.serverId ?? (player as any).src) || undefined,
-      position: Math.max(1, Number(player.position) || index + 1),
-      checkpoint: Math.max(0, Number(player.checkpoint) || 0),
-      totalCheckpoints: Math.max(1, Number(player.totalCheckpoints) || 1),
-      distance: Math.max(0, Number(player.distance) || 0),
-      finished: player.finished === true
-    }));
+    const standings = sanitizeArray<PlayerData>(data?.players)
+      .filter(player => player && typeof player === 'object')
+      .map((player, index) => ({
+        ...player,
+        id: player.id || String(player.serverId ?? (player as any).src ?? player.name ?? index),
+        serverId: Number(player.serverId ?? (player as any).src) || undefined,
+        position: Math.max(1, Number(player.position) || index + 1),
+        checkpoint: Math.max(0, Number(player.checkpoint) || 0),
+        totalCheckpoints: Math.max(1, Number(player.totalCheckpoints) || 1),
+        distance: Math.max(0, Number(player.distance) || 0),
+        finished: player.finished === true
+      }));
 
     setRaceState(prev => {
       const selfServerId = Number(serverId);
@@ -380,6 +414,7 @@ export default function App() {
       prizePool: Number(data?.prizePool) || 0,
       reason: data?.reason
     });
+    setIsRaceActiveSync(false);
     setScreen('results');
   });
 
@@ -395,11 +430,11 @@ export default function App() {
 
   useNuiEvent('lobbyUpdate', (data: any) => {
     setLobbyData(data || null);
-    if (screen === 'none') setScreen('tablet');
   });
 
   useNuiEvent('leftLobby', () => {
     setLobbyData(null);
+    setIsRaceActiveSync(false);
     if (screen === 'tablet') fetchNui('getDashboardData', {}, { success: true });
   });
 

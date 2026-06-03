@@ -54,6 +54,12 @@ function NUI.Close()
     NUI.SetVisibility(false)
 end
 
+--- Release focus without hiding screen (keeps countdown/HUD visible)
+function NUI.ReleaseFocus()
+    isOpen = false
+    NUI.SetFocus(false, false)
+end
+
 --- Check if UI is currently open
 ---@return boolean
 function NUI.IsOpen()
@@ -272,6 +278,7 @@ end)
 
 -- Start race callback
 RegisterNUICallback('startRace', function(_, cb)
+    NUI.Close()
     TriggerServerEvent('streetracing:server:startRace')
     cb({ success = true })
 end)
@@ -284,21 +291,44 @@ end)
 
 -- Set waypoint to race start line
 RegisterNUICallback('setWaypoint', function(_, cb)
-    if not CurrentLobby or not CurrentLobby.route or not CurrentLobby.route.checkpoints then
-        cb({ success = false, error = 'no_lobby' })
-        return
-    end
+    local ok, err = pcall(function()
+        if not CurrentLobby or not CurrentLobby.route or not CurrentLobby.route.checkpoints then
+            return false, 'no_lobby'
+        end
 
-    local startPos = CurrentLobby.route.checkpoints[1]
-    if startPos then
-        SetNewWaypoint(startPos.x, startPos.y)
+        local startPos = CurrentLobby.route.checkpoints[1]
+        if not startPos then
+            return false, 'no_start_pos'
+        end
+
+        -- Support vector3 fields or array indices safely
+        local x = tonumber(startPos.x or startPos[1])
+        local y = tonumber(startPos.y or startPos[2])
+
+        if not x or not y then
+            return false, 'invalid_coords'
+        end
+
+        SetNewWaypoint(x, y)
+        
         lib.notify({
             title = 'Waypoint Set',
             description = 'Start line marked on your GPS. Drive there!',
             type = 'success'
         })
+        return true
+    end)
+
+    if not ok then
+        print(('[racing-system] ERROR in setWaypoint: %s'):format(tostring(err)))
+        cb({ success = false, error = tostring(err) })
+    else
+        if type(err) == 'string' then
+            cb({ success = false, error = err })
+        else
+            cb({ success = true })
+        end
     end
-    cb({ success = true })
 end)
 
 RegisterNUICallback('getDashboardData', function(_, cb)

@@ -35,7 +35,7 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
   const safeOpacity = Math.max(0.3, Math.min(1, (Number(hudOpacity) || 100) / 100));
 
   return (
-    <div className="w-screen h-screen relative pointer-events-auto" style={{ opacity: safeOpacity }}>
+    <div className="w-screen h-screen relative pointer-events-none" style={{ opacity: safeOpacity }}>
       {/* Speed & position stay centered so they do not cover the GTA minimap. */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
         <motion.div

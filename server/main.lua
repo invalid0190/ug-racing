@@ -74,9 +74,7 @@ local function LoadReputation()
     LogInfo(('Loaded reputation for %d racers'):format(count))
 end
 
-local function OrganizerCoords()
-    return vector3(Config.NPC.coords.x, Config.NPC.coords.y, Config.NPC.coords.z)
-end
+
 
 local function SaveReputation()
     local ok, encoded = pcall(json.encode, PlayerReputation)
@@ -1099,10 +1097,7 @@ RegisterNetEvent('streetracing:server:createLobby', function(routeId, betAmount)
         return
     end
 
-    if not ValidateDistance(src, OrganizerCoords(), Config.InteractionDistances.organizer, 'createLobby') then
-        Notify(src, { title = 'Too Far Away', description = 'Talk to the race organizer to create a race', type = 'error' })
-        return
-    end
+
 
     local now = os.time()
     if PlayerCooldowns[identifier] and now - PlayerCooldowns[identifier] < Config.RaceCooldown then
@@ -1190,10 +1185,7 @@ RegisterNetEvent('streetracing:server:joinLobby', function(lobbyId)
         return
     end
 
-    if not ValidateDistance(src, OrganizerCoords(), Config.InteractionDistances.organizer, 'joinLobby') then
-        Notify(src, { title = 'Too Far Away', description = 'Talk to the race organizer to join a race', type = 'error' })
-        return
-    end
+
 
     if lobby.status ~= 'waiting' then
         Notify(src, { title = 'Error', description = 'This race has already started', type = 'error' })
@@ -1311,7 +1303,7 @@ RegisterNetEvent('streetracing:server:toggleReady', function()
     local lobby = lobbyId and RaceLobbies[lobbyId]
     if not lobby or lobby.status ~= 'waiting' then return end
 
-    if not ValidateDistance(src, OrganizerCoords(), Config.InteractionDistances.organizer, 'toggleReady') then return end
+
 
     local player = FindLobbyPlayer(lobby, sessionId)
     if not player then return end
@@ -1360,10 +1352,7 @@ RegisterNetEvent('streetracing:server:startRace', function()
             return
         end
 
-        if not ValidateDistance(player.src, startCoords, Config.InteractionDistances.startLine, 'startRace') then
-            Notify(src, { title = 'Too Far Away', description = ('%s must be near the start line'):format(player.name), type = 'error' })
-            return
-        end
+
 
         local vehicleOk, vehicleMessage = ValidateRaceVehicle(player.src)
         if not vehicleOk then
@@ -1376,53 +1365,59 @@ RegisterNetEvent('streetracing:server:startRace', function()
     BroadcastLobby(lobby)
     BroadcastAvailableLobbies(-1)
 
-    for _, player in ipairs(lobby.players) do
-        TriggerClientEvent('streetracing:client:raceStarting', player.src, {
-            lobby = lobby,
-            countdown = Config.CountdownTime,
-            radioChannel = lobby.radioChannel,
-            radioAutoJoin = GetRacerRadioConfig().autoJoinOnRaceStart ~= false
-        })
-    end
+    -- Delay the countdown by 1.5s to let all clients close their tablet UI
+    SetTimeout(1500, function()
+        local currentLobby = RaceLobbies[lobbyId]
+        if not currentLobby or currentLobby.status ~= 'starting' then return end
 
-    SetTimeout(Config.CountdownTime * 1000, function()
-        local current = RaceLobbies[lobbyId]
-        if not current or current.status ~= 'starting' then return end
-
-        current.status = 'racing'
-        current.startedAt = GetGameTimer()
-        current.finishOrder = {}
-        current.finished = {}
-        current.progress = {}
-        current.policeNearby = false
-        current.lastPoliceWarning = 0
-        ActiveRaces[lobbyId] = current
-
-        for _, player in ipairs(current.players) do
-            local playerKey = GetRacePlayerKey(player)
-            if playerKey then
-                current.progress[playerKey] = {
-                    checkpoint = 0,
-                    distance = 999999.0,
-                    updatedAt = GetGameTimer()
-                }
-            end
-
-            TriggerClientEvent('streetracing:client:raceStart', player.src, {
-                lobby = current,
-                checkpoints = current.route.checkpoints,
-                radioChannel = current.radioChannel,
+        for _, player in ipairs(currentLobby.players) do
+            TriggerClientEvent('streetracing:client:raceStarting', player.src, {
+                lobby = currentLobby,
+                countdown = Config.CountdownTime,
+                radioChannel = currentLobby.radioChannel,
                 radioAutoJoin = GetRacerRadioConfig().autoJoinOnRaceStart ~= false
             })
         end
 
-        BroadcastRaceStandings(current)
-        StartPoliceWarningMonitor(lobbyId)
+        SetTimeout(Config.CountdownTime * 1000, function()
+            local current = RaceLobbies[lobbyId]
+            if not current or current.status ~= 'starting' then return end
 
-        SetTimeout(Config.RaceTimeoutMinutes * 60 * 1000, function()
-            if ActiveRaces[lobbyId] and not ActiveRaces[lobbyId].settled then
-                FinalizeRace(lobbyId, 'timeout')
+            current.status = 'racing'
+            current.startedAt = GetGameTimer()
+            current.finishOrder = {}
+            current.finished = {}
+            current.progress = {}
+            current.policeNearby = false
+            current.lastPoliceWarning = 0
+            ActiveRaces[lobbyId] = current
+
+            for _, player in ipairs(current.players) do
+                local playerKey = GetRacePlayerKey(player)
+                if playerKey then
+                    current.progress[playerKey] = {
+                        checkpoint = 0,
+                        distance = 999999.0,
+                        updatedAt = GetGameTimer()
+                    }
+                end
+
+                TriggerClientEvent('streetracing:client:raceStart', player.src, {
+                    lobby = current,
+                    checkpoints = current.route.checkpoints,
+                    radioChannel = current.radioChannel,
+                    radioAutoJoin = GetRacerRadioConfig().autoJoinOnRaceStart ~= false
+                })
             end
+
+            BroadcastRaceStandings(current)
+            StartPoliceWarningMonitor(lobbyId)
+
+            SetTimeout(Config.RaceTimeoutMinutes * 60 * 1000, function()
+                if ActiveRaces[lobbyId] and not ActiveRaces[lobbyId].settled then
+                    FinalizeRace(lobbyId, 'timeout')
+                end
+            end)
         end)
     end)
 end)
