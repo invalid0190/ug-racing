@@ -1,7 +1,8 @@
 # ug-racing
 
 ![UG Racing thumbnail](assets/thumbnail.png)
-# Preview: https://r2.fivemanage.com/P7y9eTE8cCknS7gpxfED8/ug-racing.mp4
+# Preview: https://youtu.be/1liVZuf_3DQ?si=-ujK27-dFGrszbeG
+# Discord: https://discord.gg/BN34qUeKwY
 
 Underground Street Racing System for FiveM standalone servers. This resource adds a hidden race organizer, reputation-gated routes, race lobbies, entry fees, prize pools, checkpoints, race HUD, leaderboards, police tools, and spike strips.
 
@@ -65,3 +66,15 @@ Optional:
 ## Credits
 
 BLDR
+
+## Localization
+
+Set the resource language in `config.lua`:
+
+```lua
+Config.Locale = "en" -- en or hi
+```
+
+Language files are stored in `locales/`. Copy `locales/en.lua`, rename it with a
+new language code, translate its values, and set `Config.Locale` to that code.
+Missing translations automatically fall back to English.

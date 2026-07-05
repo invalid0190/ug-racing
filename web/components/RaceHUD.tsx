@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Flag, Gauge, Users, AlertTriangle, Siren } from 'lucide-react';
+import { t } from '../hooks/useLocale';
 
 interface PlayerData {
   id?: string;
@@ -46,7 +47,7 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
           <div className="race-hud-panel rounded-lg px-4 py-3 min-w-[118px] border-l-4 border-l-red-600">
             <div className="flex items-center gap-2 text-red-500 text-xs mb-1 uppercase tracking-wider font-semibold">
               <Gauge size={14} />
-              <span>Speed</span>
+              <span>{t('speed', 'Speed')}</span>
             </div>
             <div className="text-white font-bold text-3xl font-mono tracking-tight leading-none">
               {Math.max(0, Number(speed) || 0)}
@@ -57,7 +58,7 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
           <div className="race-hud-panel rounded-lg px-4 py-3 min-w-[96px] border-l-4 border-l-orange-500">
             <div className="flex items-center gap-2 text-orange-500 text-xs mb-1 uppercase tracking-wider font-semibold">
               <Flag size={14} />
-              <span>Pos</span>
+              <span>{t('position', 'Pos')}</span>
             </div>
             <div className="text-white font-bold text-3xl font-mono tracking-tight leading-none">
               {Math.max(1, Number(position) || 1)}<span className="text-lg text-zinc-600">/{Math.max(1, Number(totalPlayers) || 1)}</span>
@@ -75,7 +76,7 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
         <div className="race-hud-panel rounded-lg px-6 py-3 border-t-2 border-t-yellow-500">
           <div className="flex items-center gap-3 text-yellow-500 text-sm mb-2 uppercase tracking-wider font-semibold">
             <Flag size={16} />
-            <span>Checkpoint {safeCurrent}/{safeTotal}</span>
+            <span>{t('checkpoint', 'Checkpoint')} {safeCurrent}/{safeTotal}</span>
           </div>
           <div className="w-72 h-2.5 bg-black/80 rounded-full overflow-hidden border border-zinc-800">
             <motion.div
@@ -100,7 +101,7 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
         <div className="race-hud-panel rounded-lg p-3 min-w-[180px] border-r-2 border-r-zinc-600">
           <div className="flex items-center gap-2 text-zinc-500 text-xs mb-2 border-b border-zinc-800 pb-2 uppercase tracking-wider font-semibold">
             <Users size={14} />
-            <span>Live Standings</span>
+            <span>{t('live_standings', 'Live Standings')}</span>
           </div>
           <div className="space-y-1.5">
             {sortedPlayers.slice(0, 4).map((player, i) => {
@@ -122,7 +123,7 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
                   <span className="truncate max-w-[90px]">{player.name || 'Unknown'}</span>
                 </span>
                 {player.finished ? (
-                  <span className="text-xs text-green-500 uppercase font-semibold">Done</span>
+                  <span className="text-xs text-green-500 uppercase font-semibold">{t('done', 'Done')}</span>
                 ) : player.checkpoint !== undefined && (
                   <span className="text-[10px] text-zinc-600 font-mono">
                     {Math.max(0, Number(player.checkpoint) || 0)}/{Math.max(1, Number(player.totalCheckpoints) || safeTotal)}
@@ -145,8 +146,8 @@ export default function RaceHUD({ currentCheckpoint, totalCheckpoints, speed, po
           <div className="police-warning rounded-xl px-10 py-5 flex items-center gap-4">
             <Siren className="text-white animate-pulse" size={40} />
             <div>
-              <div className="text-white font-bold text-2xl uppercase tracking-wider">Police Nearby!</div>
-              <div className="text-red-200 text-sm uppercase">Stay alert and evade</div>
+              <div className="text-white font-bold text-2xl uppercase tracking-wider">{t('police_nearby', 'Police Nearby!')}</div>
+              <div className="text-red-200 text-sm uppercase">{t('stay_alert', 'Stay alert and evade')}</div>
             </div>
           </div>
         </motion.div>

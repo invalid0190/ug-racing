@@ -3,7 +3,7 @@ local LocalSpikeEntities = {}
 local SpikeHitSent = {}
 
 local function Notify(data)
-    lib.notify(data)
+    lib.notify(LocalizeNotification(data))
 end
 
 -- Create spike strip locally
@@ -113,28 +113,28 @@ end)
 RegisterCommand('policeradio', function()
     lib.registerContext({
         id = 'police_radio',
-        title = 'Police Radio',
+        title = _L('Police Radio'),
         canClose = true,
         options = {
             {
-                title = 'Scan for Street Races',
-                description = 'Detect any active illegal races',
+                title = _L('Scan for Street Races'),
+                description = _L('Detect any active illegal races'),
                 icon = 'search',
                 onSelect = function()
                     ExecuteCommand('scanraces')
                 end
             },
             {
-                title = 'Deploy Spike Strip',
-                description = 'Place a spike strip at your location',
+                title = _L('Deploy Spike Strip'),
+                description = _L('Place a spike strip at your location'),
                 icon = 'road',
                 onSelect = function()
                     ExecuteCommand('spike')
                 end
             },
             {
-                title = 'Remove Spike Strip',
-                description = 'Remove your deployed spike strip',
+                title = _L('Remove Spike Strip'),
+                description = _L('Remove your deployed spike strip'),
                 icon = 'times',
                 onSelect = function()
                     ExecuteCommand('removespike')

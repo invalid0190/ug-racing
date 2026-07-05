@@ -16,6 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { fetchNui } from '../hooks/useNui';
+import { t } from '../hooks/useLocale';
 import type { LobbySummary, NetworkData, PlayerStats, RouteSummary, TabletSettings } from '../App';
 import LobbyPanel from './LobbyPanel';
 import LeaderboardPanel from './LeaderboardPanel';
@@ -41,11 +42,11 @@ interface TabletDashboardProps {
 type Tab = 'lobby' | 'routes' | 'leaderboard' | 'history' | 'stats' | 'network' | 'settings';
 
 const tabs = [
-  { id: 'lobby' as Tab, label: 'Lobby', icon: Flag },
-  { id: 'routes' as Tab, label: 'Routes', icon: Map },
-  { id: 'leaderboard' as Tab, label: 'Ranks', icon: Trophy },
-  { id: 'history' as Tab, label: 'History', icon: History },
-  { id: 'stats' as Tab, label: 'My Stats', icon: BarChart3 }
+  { id: 'lobby' as Tab, labelKey: 'lobby', label: 'Lobby', icon: Flag },
+  { id: 'routes' as Tab, labelKey: 'routes', label: 'Routes', icon: Map },
+  { id: 'leaderboard' as Tab, labelKey: 'ranks', label: 'Ranks', icon: Trophy },
+  { id: 'history' as Tab, labelKey: 'history', label: 'History', icon: History },
+  { id: 'stats' as Tab, labelKey: 'my_stats', label: 'My Stats', icon: BarChart3 }
 ];
 
 const speedLineStyles = Array.from({ length: 8 }, (_, i) => ({
@@ -144,7 +145,7 @@ export default function TabletDashboard({
                     <span className={`text-[10px] uppercase font-semibold ${
                       isActive ? 'text-red-400' : 'text-zinc-600 group-hover:text-zinc-400'
                     }`}>
-                      {tab.label}
+                      {t(tab.labelKey, tab.label)}
                     </span>
                     {isActive && (
                       <motion.div
@@ -205,7 +206,7 @@ export default function TabletDashboard({
                   <div className="px-6 py-2 flex items-center justify-center gap-3">
                     <AlertTriangle size={14} className="text-red-400 animate-pulse" />
                     <span className="text-red-200 text-sm font-semibold">
-                      POLICE ACTIVITY DETECTED NEAR ACTIVE ROUTE
+                      {t('police_activity', 'POLICE ACTIVITY DETECTED NEAR ACTIVE ROUTE')}
                     </span>
                     <AlertTriangle size={14} className="text-red-400 animate-pulse" />
                   </div>

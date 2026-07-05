@@ -23,7 +23,7 @@ end
 
 local function Notify(src, data)
     if not src or src == 0 then return end
-    TriggerClientEvent('ox_lib:notify', src, data)
+    TriggerClientEvent('ox_lib:notify', src, LocalizeNotification(data))
 end
 
 -- Normalizes FiveM string player ids before they are used with server natives.
@@ -620,9 +620,9 @@ local function BuildAvailableLobbies()
         if lobby.status == 'waiting' then
             table.insert(availableLobbies, {
                 id = lobby.id,
-                routeName = lobby.route.name,
+                routeName = _L(lobby.route.name),
                 routeId = lobby.route.id,
-                hostName = GetPlayerName(lobby.host) or 'Unknown',
+                hostName = GetPlayerName(lobby.host) or _L('ui.unknown'),
                 playerCount = #lobby.players,
                 maxPlayers = Config.MaxPlayers,
                 betAmount = lobby.betAmount,
@@ -871,6 +871,22 @@ local function BroadcastRaceStandings(lobby)
             players = standings
         })
     end
+end
+
+-- Re-sends critical race transitions once while the player remains in the same race.
+local function TriggerRaceEventWithRetry(lobbyId, expectedStatus, player, eventName, payload)
+    if type(lobbyId) ~= 'string' or not player or not player.src then return end
+
+    TriggerClientEvent(eventName, player.src, payload)
+    SetTimeout(350, function()
+        local current = ActiveRaces[lobbyId] or RaceLobbies[lobbyId]
+        local target = NormalizeSource(player.src)
+        if not current or current.settled or current.status ~= expectedStatus or not target then return end
+
+        local sessionId = GetLobbyKey(target)
+        if not sessionId or PlayerLobby[sessionId] ~= lobbyId then return end
+        TriggerClientEvent(eventName, target, payload)
+    end)
 end
 
 local callbackApi = lib and type(lib.callback) == 'table' and lib.callback or nil
@@ -1371,7 +1387,8 @@ RegisterNetEvent('streetracing:server:startRace', function()
         if not currentLobby or currentLobby.status ~= 'starting' then return end
 
         for _, player in ipairs(currentLobby.players) do
-            TriggerClientEvent('streetracing:client:raceStarting', player.src, {
+            TriggerRaceEventWithRetry(lobbyId, 'starting', player, 'streetracing:client:raceStarting', {
+                raceId = lobbyId,
                 lobby = currentLobby,
                 countdown = Config.CountdownTime,
                 radioChannel = currentLobby.radioChannel,
@@ -1401,10 +1418,15 @@ RegisterNetEvent('streetracing:server:startRace', function()
                         updatedAt = GetGameTimer()
                     }
                 end
+            end
 
-                TriggerClientEvent('streetracing:client:raceStart', player.src, {
+            local initialStandings = BuildRaceStandings(current)
+            for _, player in ipairs(current.players) do
+                TriggerRaceEventWithRetry(lobbyId, 'racing', player, 'streetracing:client:raceStart', {
+                    raceId = lobbyId,
                     lobby = current,
                     checkpoints = current.route.checkpoints,
+                    players = initialStandings,
                     radioChannel = current.radioChannel,
                     radioAutoJoin = GetRacerRadioConfig().autoJoinOnRaceStart ~= false
                 })

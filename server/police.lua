@@ -10,7 +10,7 @@ end
 
 local function Notify(src, data)
     if not src or src == 0 then return end
-    TriggerClientEvent('ox_lib:notify', src, data)
+    TriggerClientEvent('ox_lib:notify', src, LocalizeNotification(data))
 end
 
 local function NormalizeSource(value)

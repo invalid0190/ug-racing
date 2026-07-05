@@ -6,7 +6,9 @@ description 'Underground Street Racing System'
 
 shared_scripts {
     '@ox_lib/init.lua',
-    'config.lua'
+    'config.lua',
+    'locales/*.lua',
+    'shared/locale.lua'
 }
 client_scripts {
     'client/nui.lua',

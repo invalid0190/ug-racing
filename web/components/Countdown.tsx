@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap } from 'lucide-react';
+import { t } from '../hooks/useLocale';
 
 interface CountdownProps {
   countdown: number;
@@ -91,7 +92,7 @@ export default function Countdown({ countdown: initialCount, routeName }: Countd
                   textShadow: '0 0 60px rgba(34, 197, 94, 0.8), 0 0 120px rgba(34, 197, 94, 0.5)'
                 }}
               >
-                GO!
+                {t('go', 'GO!')}
               </span>
               <Zap size={80} className="text-green-400" strokeWidth={3} />
             </motion.div>
@@ -105,7 +106,7 @@ export default function Countdown({ countdown: initialCount, routeName }: Countd
             animate={{ opacity: 1 }}
             className="text-red-500 text-2xl mt-8 uppercase tracking-[0.2em] font-semibold"
           >
-            Get Ready
+            {t('get_ready', 'Get Ready')}
           </motion.div>
         )}
       </div>

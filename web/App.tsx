@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { isDebug, useNuiEvent, fetchNui } from './hooks/useNui';
+import { setUiTranslations } from './hooks/useLocale';
 import RaceHUD from './components/RaceHUD';
 import Countdown from './components/Countdown';
 import Results from './components/Results';
@@ -242,6 +243,7 @@ export default function App() {
   const [settings, setSettings] = useState<TabletSettings>(defaultSettings);
   const [playerRep, setPlayerRep] = useState(0);
   const [serverId, setServerId] = useState<number | null>(null);
+  const [, setLocaleRevision] = useState(0);
   const policeWarningTimer = useRef<number | null>(null);
   const hudOpacity = Math.max(30, Math.min(100, Number(settings.hudOpacity) || 100));
 
@@ -271,6 +273,10 @@ export default function App() {
   }, [screen]);
 
   useNuiEvent('open', (data: any) => {
+    if (data?.translations !== undefined) {
+      setUiTranslations(data.translations);
+      setLocaleRevision(value => value + 1);
+    }
     if (data?.lobby !== undefined) setLobbyData(data.lobby || null);
     if (data?.rep !== undefined) setPlayerRep(Math.max(0, Number(data.rep) || 0));
     if (data?.serverId !== undefined) setServerId(Number(data.serverId) || null);
@@ -296,6 +302,11 @@ export default function App() {
     }
     if (data?.settings !== undefined) setSettings({ ...defaultSettings, ...data.settings });
     setScreen('tablet');
+  });
+
+  useNuiEvent('receiveLocale', (data: any) => {
+    setUiTranslations(data?.translations);
+    setLocaleRevision(value => value + 1);
   });
 
   useNuiEvent('close', () => {

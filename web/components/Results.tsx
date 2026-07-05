@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Clock, DollarSign, Flame, Star, Trophy, X } from 'lucide-react';
+import { t } from '../hooks/useLocale';
 
 interface ResultItem {
   name: string;
@@ -86,9 +87,9 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
           <div className="flex items-center gap-3 min-w-0">
             <Flame className="text-red-500 shrink-0" size={28} />
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-500">Finish Complete</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-500">{t('finish_complete', 'Finish Complete')}</p>
               <h2 className="text-2xl font-bold text-white uppercase tracking-wider truncate">
-                Race <span className="text-red-500">Results</span>
+                {t('race_results', 'Race Results')}
               </h2>
             </div>
           </div>
@@ -104,7 +105,7 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
 
         <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-4 rounded-lg border border-green-500/30 bg-green-950/25 px-4 py-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Total Prize Pool</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{t('total_prize_pool', 'Total Prize Pool')}</p>
             <p className="mt-1 text-sm text-zinc-400">{rankedResults.length} driver{rankedResults.length === 1 ? '' : 's'} recorded</p>
           </div>
           <div className="flex items-center gap-1 text-2xl font-black text-green-400">
@@ -115,7 +116,7 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
 
         {rankedResults.length === 0 ? (
           <div className="mb-4 rounded-lg border border-zinc-800 bg-black/60 py-10 text-center text-zinc-400">
-            No finishers recorded.
+            {t('no_finishers', 'No finishers recorded.')}
           </div>
         ) : (
           <div className="mb-4">
@@ -124,9 +125,9 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
                 <div className="min-w-0">
                   <div className="mb-2 flex items-center gap-2 text-yellow-400">
                     <Trophy size={22} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em]">Winner</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em]">{t('winner', 'Winner')}</span>
                   </div>
-                  <p className="truncate text-2xl font-black text-white">{winner?.name || 'Unknown'}</p>
+                  <p className="truncate text-2xl font-black text-white">{winner?.name || t('unknown', 'Unknown')}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                     <span className="flex items-center gap-1 font-bold text-yellow-500">
                       <Star size={13} />+{winner?.repGained || 0} REP
@@ -146,8 +147,8 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
             </div>
 
             <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-600">
-              <span>Final Standings</span>
-              <span>Time</span>
+              <span>{t('final_standings', 'Final Standings')}</span>
+              <span>{t('time', 'Time')}</span>
             </div>
             <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
               {rankedResults.map((result, index) => {
@@ -164,7 +165,7 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
                       {position}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-bold text-white">{result.name || 'Unknown'}</div>
+                      <div className="truncate font-bold text-white">{result.name || t('unknown', 'Unknown')}</div>
                       <div className="mt-0.5 flex items-center gap-3 text-xs">
                         <span className="flex items-center gap-1 text-yellow-500">
                           <Star size={12} />+{result.repGained || 0} REP
@@ -187,7 +188,7 @@ export default function Results({ results, prizePool, onClose }: ResultsProps) {
           onClick={onClose}
           className="btn-join-race w-full rounded-lg py-3 text-base font-bold uppercase tracking-wider"
         >
-          Continue
+          {t('continue', 'Continue')}
         </button>
       </motion.div>
     </div>

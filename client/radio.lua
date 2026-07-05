@@ -6,7 +6,7 @@ RacingRadio = {
 }
 
 local function Notify(data)
-    lib.notify(data)
+    lib.notify(LocalizeNotification(data))
 end
 
 local function GetVoiceResource()
@@ -89,7 +89,7 @@ function RacingRadio.Join(channel, automatic)
     RacingRadio.joinedAutomatically = automatic == true
 
     TriggerServerEvent('streetracing:server:raceRadioState', true, channel)
-    Notify({ title = 'Race Radio', description = ('Crew radio connected: %.1f MHz'):format(channel + 0.0), type = 'success' })
+    Notify({ title = 'Race Radio', description = _L('crew_radio_connected', channel + 0.0), type = 'success' })
     SendRadioState()
     return true
 end

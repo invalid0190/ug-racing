@@ -12,9 +12,27 @@ local LastWrongWayWarning = 0
 local LastVehicleWarning = 0
 local LastPoliceWarning = 0
 local LastProgressSent = 0
+local ActiveRaceId = nil
+local CountdownRaceId = nil
 
 local function Notify(data)
-    lib.notify(data)
+    lib.notify(LocalizeNotification(data))
+end
+
+-- Shows race UI without stealing gameplay controls and repeats the NUI message once.
+local function ShowRaceScreen(action, data)
+    data = data or {}
+    NUI.ReleaseFocus()
+    NUI.SetVisibility(true)
+    NUI.SendMessage('receiveLocale', GetLocalePayload())
+    NUI.SendMessage(action, data)
+
+    CreateThread(function()
+        Wait(250)
+        if action == 'showRaceHUD' and not IsRacing then return end
+        if action == 'showCountdown' and not CountdownRaceId then return end
+        NUI.SendMessage(action, data)
+    end)
 end
 
 local function IsAllowedRaceVehicle(vehicle)
@@ -43,7 +61,7 @@ local function SetCheckpointBlip(coords, isFinish)
     SetBlipRoute(ActiveCheckpointBlip, true)
     SetBlipRouteColour(ActiveCheckpointBlip, isFinish and 2 or 5)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString(isFinish and 'Race Finish' or 'Race Checkpoint')
+    AddTextComponentString(isFinish and _L('Race Finish') or _L('Race Checkpoint'))
     EndTextCommandSetBlipName(ActiveCheckpointBlip)
 end
 
@@ -58,6 +76,8 @@ local function ResetRaceState(hideHud)
     PoliceNearby = false
     LastPoliceWarning = 0
     LastProgressSent = 0
+    ActiveRaceId = nil
+    CountdownRaceId = nil
     ClearCheckpointBlip()
 
     if Config.RacerRadio and Config.RacerRadio.leaveOnRaceEnd ~= false and RacingRadio and RacingRadio.Leave then
@@ -120,9 +140,24 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
         return
     end
 
+    local raceId = data.raceId or (data.lobby and data.lobby.id)
+    if IsRacing and raceId and ActiveRaceId == raceId then
+        RaceData = data.lobby or RaceData
+        local players = type(data.players) == 'table' and data.players or RaceData.players or {}
+        ShowRaceScreen('showRaceHUD', {
+            totalCheckpoints = TotalCheckpoints,
+            players = players,
+            serverId = GetPlayerServerId(PlayerId())
+        })
+        SendRaceProgress(true)
+        return
+    end
+
     IsRacing = true
     RaceCancelled = false
     FinishedSent = false
+    ActiveRaceId = raceId
+    CountdownRaceId = nil
     CurrentCheckpoint = 0
     Checkpoints = data.checkpoints
     TotalCheckpoints = #Checkpoints
@@ -141,9 +176,10 @@ RegisterNetEvent('streetracing:client:raceStart', function(data)
         lib.hideContext(false)
     end
 
-    NUI.SendMessage('showRaceHUD', {
+    local players = type(data.players) == 'table' and data.players or RaceData.players or {}
+    ShowRaceScreen('showRaceHUD', {
         totalCheckpoints = TotalCheckpoints,
-        players = RaceData.players or {},
+        players = players,
         serverId = GetPlayerServerId(PlayerId())
     })
 
@@ -203,6 +239,7 @@ end)
 RegisterNetEvent('streetracing:client:raceStarting', function(data)
     data = data or {}
     RaceData = data.lobby or {}
+    CountdownRaceId = data.raceId or RaceData.id or CountdownRaceId or 'pending'
     local countdown = tonumber(data.countdown) or Config.CountdownTime or 10
     local routeName = RaceData.route and RaceData.route.name or 'Race'
 
@@ -214,10 +251,9 @@ RegisterNetEvent('streetracing:client:raceStarting', function(data)
         lib.hideContext(false)
     end
 
-    NUI.ReleaseFocus()
-    NUI.SendMessage('showCountdown', {
+    ShowRaceScreen('showCountdown', {
         countdown = countdown,
-        routeName = routeName,
+        routeName = _L(routeName),
         serverId = GetPlayerServerId(PlayerId())
     })
 
@@ -254,6 +290,8 @@ RegisterNetEvent('streetracing:client:raceResults', function(data)
     data = data or {}
     IsRacing = false
     RaceCancelled = false
+    ActiveRaceId = nil
+    CountdownRaceId = nil
     ClearCheckpointBlip()
 
     if Config.RacerRadio and Config.RacerRadio.leaveOnRaceEnd ~= false and RacingRadio and RacingRadio.Leave then

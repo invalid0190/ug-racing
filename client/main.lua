@@ -8,7 +8,7 @@ local function LogError(message)
 end
 
 local function Notify(data)
-    lib.notify(data)
+    lib.notify(LocalizeNotification(data))
 end
 
 -- Fetches the latest lobby list synchronously for ox_lib menus, falling back to the event flow.
@@ -75,7 +75,7 @@ RegisterCommand('racingtablet', function()
     OpenRacingTablet()
 end, false)
 
-RegisterKeyMapping('racingtablet', 'Open Racing Tablet', 'keyboard', 'F6')
+RegisterKeyMapping('racingtablet', _L('Open Racing Tablet'), 'keyboard', 'F6')
 
 CreateThread(function()
     while GetResourceState('ox_lib') ~= 'started' do Wait(100) end
@@ -112,6 +112,10 @@ end)
 
 RegisterNetEvent('streetracing:client:lobbyUpdate', function(lobby)
     if not lobby then return end
+    if lobby.route then
+        lobby.route.name = _L(lobby.route.name)
+        lobby.route.description = _L(lobby.route.description)
+    end
     CurrentLobby = lobby
     NUI.SendMessage('lobbyUpdate', lobby)
 

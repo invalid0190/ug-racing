@@ -38,6 +38,9 @@ function NUI.Open(data)
     data.routes = data.routes or (NUI.GetRouteSummaries and NUI.GetRouteSummaries() or {})
     data.settings = data.settings or (NUI.GetTabletSettings and NUI.GetTabletSettings() or {})
     data.serverId = data.serverId or GetPlayerServerId(PlayerId())
+    local localePayload = GetLocalePayload()
+    data.locale = localePayload.locale
+    data.translations = localePayload.translations
     isOpen = true
     NUI.SetFocus(true, true)
     NUI.SendMessage('open', data)
@@ -135,8 +138,8 @@ local function BuildRouteSummaries()
         local minRep = tonumber(route.minRep) or 0
         routes[#routes + 1] = {
             id = route.id,
-            name = route.name,
-            description = route.description,
+            name = _L(route.name),
+            description = _L(route.description),
             minRep = minRep,
             entryFee = tonumber(route.entryFee) or 0,
             checkpointCount = checkpointCount,
@@ -208,6 +211,7 @@ function NUI.GetTabletSettings()
 end
 
 function NUI.SendDashboardData()
+    NUI.SendMessage('receiveLocale', GetLocalePayload())
     NUI.SendMessage('receiveRoutes', BuildRouteSummaries())
     NUI.SendMessage('receiveSettings', LoadTabletSettings())
     if RacingRadio and RacingRadio.GetState then
@@ -312,8 +316,8 @@ RegisterNUICallback('setWaypoint', function(_, cb)
         SetNewWaypoint(x, y)
         
         lib.notify({
-            title = 'Waypoint Set',
-            description = 'Start line marked on your GPS. Drive there!',
+            title = _L('Waypoint Set'),
+            description = _L('Start line marked on your GPS. Drive there!'),
             type = 'success'
         })
         return true
